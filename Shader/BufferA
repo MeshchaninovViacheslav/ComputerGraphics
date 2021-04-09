@@ -1,0 +1,352 @@
+const float INF = 1e10;
+const vec3 CAMERA_POS = vec3(-2, 1.2, -6); //(-3, 2, -3);
+const int REFLECTION_MAX_DEPTH = 10;
+
+const float PLANE_HEIGHT = -1.;
+const float CYLINDR_HEIGHT = PLANE_HEIGHT + 0.2;
+const float CUBE_HEIGHT = CYLINDR_HEIGHT + 0.5;
+const vec3 CUBE_COLOR = vec3(0., 0.0, 0.9);
+
+const float AIR_N = 1.0;
+const float GLASS_N = 1.5;
+const float DIAMOND_N = 2.5;
+
+const float BLUR_RATE = 0.05;
+
+const int EMISSION = 0;
+const int DIFFUSE = 1;
+const int REFLECTION = 2;
+const int REFRACTION = 3;
+
+vec3 randDir;
+
+struct SphereLight {
+    vec3 init_position;
+    vec3 position;
+    float radius;
+    vec3 color;
+    float specular;
+};
+
+const int LightsNum = 2;
+SphereLight lights[LightsNum] = SphereLight[LightsNum]
+                                (SphereLight(vec3(-1.5, 1.1, 2), vec3(-1.5, 1.5, 2), 0.3, vec3(1, 1, 0.1), 15.0),
+                                 SphereLight(vec3(2, 1., 2), vec3(3, 1.5, 2), 0.25, vec3(0.1, 1, 0.1), 20.0)
+                                 );
+struct Quadrate {
+    vec3 A;
+    vec3 B;
+    vec3 C;
+    vec3 D;
+    vec3 normal;
+};
+
+Quadrate cube_edges[6];
+
+void CreateCube(void) {
+    vec3 points[8];
+
+    points[0] = vec3( -1.0, -1.0, -1.0 ) / 2.;
+    points[1] = vec3( -1.0, -1.0,  1.0 ) / 2.;
+    points[2] = vec3( -1.0,  1.0, -1.0 ) / 2.;
+    points[3] = vec3( -1.0,  1.0,  1.0 ) / 2.;
+    points[4] = vec3(  1.0, -1.0, -1.0 ) / 2.;
+    points[5] = vec3(  1.0, -1.0,  1.0 ) / 2.;
+    points[6] = vec3(  1.0,  1.0, -1.0 ) / 2.;
+    points[7] = vec3(  1.0,  1.0,  1.0 ) / 2.;
+    
+    for (int i = 0; i < points.length(); ++i) {
+        points[i].y += CUBE_HEIGHT;
+    }
+    
+    cube_edges[0].A = points[0]; cube_edges[0].B = points[1];
+    cube_edges[0].C = points[3]; cube_edges[0].D = points[2];
+    cube_edges[0].normal = vec3(1, 0, 0);
+    
+    cube_edges[1].A = points[0]; cube_edges[1].B = points[1];
+    cube_edges[1].C = points[5]; cube_edges[1].D = points[4];
+    cube_edges[1].normal = vec3(0, 1, 0);
+    
+    cube_edges[2].A = points[1]; cube_edges[2].B = points[3];
+    cube_edges[2].C = points[7]; cube_edges[2].D = points[5];
+    cube_edges[2].normal = vec3(0, 0, -1);
+    
+    cube_edges[3].A = points[4]; cube_edges[3].B = points[5];
+    cube_edges[3].C = points[7]; cube_edges[3].D = points[6];
+    cube_edges[3].normal = vec3(-1, 0, 0);
+    
+    cube_edges[4].A = points[2]; cube_edges[4].B = points[3];
+    cube_edges[4].C = points[7]; cube_edges[4].D = points[6];
+    cube_edges[4].normal = vec3(0, -1, 0);
+    
+    cube_edges[5].A = points[2]; cube_edges[5].B = points[0];
+    cube_edges[5].C = points[4]; cube_edges[5].D = points[6];
+    cube_edges[5].normal = vec3(0, 0, 1);
+}
+
+
+// ============================ Trace Figures ======================================
+
+float tracePlane(vec3 pos, vec3 dir, out vec3 normal) {
+    float t = (PLANE_HEIGHT - pos.y) / dir.y;
+    if (t <= 0.0) {
+        return INF;
+    }
+    
+    vec3 worldPos = t * dir + pos;
+    if (dot(worldPos.xz, worldPos.xz) >= 200.0) {
+        return INF;
+    }
+    normal = vec3(0, 1, 0);
+    return t;
+}
+
+
+float traceSphere(vec3 pos, vec3 dir, float r, out vec3 normal) {
+    // dot(pos + t * dir, pos + t * dir) == r * r;
+    // dot(pos, pos) + 2 * t * dot(pos, dir) + t * t * dot(dir, dir) == r * r
+    // t * t + 2.0 * t * dot(pos, dir) + dot(pos, pos) - r * r == 0
+    
+    float a = dot(dir, dir);
+    float b = dot(pos, dir);
+    float c = dot(pos, pos) - r * r;
+    float D = b * b - a * c;
+    if (D < 0.0) {
+        return INF;
+    }
+    float t = -b - sqrt(D);
+    if (t > 0.0) {
+        normal = normalize(pos + t * dir);
+        return t;
+    }
+    t = -b + sqrt(D);
+    if (t < 0.0) {
+        return INF;
+    }
+    normal = normalize(pos + t * dir);
+    return t;
+}
+
+
+float traceCylinder(vec3 pos, vec3 dir, out vec3 normal) {
+    float t = (CYLINDR_HEIGHT - pos.y) / dir.y;
+    if (t <= 0.0) {
+        return INF;
+    }
+    vec3 worldPos = t * dir + pos;
+    if (dot(worldPos.xz, worldPos.xz) < 0.5) {
+        normal = vec3(0, 1, 0);
+        return t;
+    }
+    
+    // dot(pos + t * dir, pos + t * dir) == r * r;
+    // dot(pos, pos) + 2 * t * dot(pos, dir) + t * t * dot(dir, dir) == r * r
+    // t * t + 2.0 * t * dot(pos, dir) + dot(pos, pos) - r * r == 0
+    float a = dot(dir.xz, dir.xz);
+    float b = dot(pos.xz, dir.xz);
+    float c = dot(pos.xz, pos.xz) - 0.5;
+    float D = b * b - a * c;
+    if (D < 0.0) {
+        return INF;
+    }
+    t = (-b - sqrt(D)) / a;
+    if (t > 0.0) {
+        worldPos = t * dir + pos;
+        if (worldPos.y <= CYLINDR_HEIGHT) {
+            normal = normalize(vec3(worldPos.x, 0, worldPos.z));
+            return t;
+        }
+    }
+    t = (-b + sqrt(D)) / a;
+    if (t < 0.0) {
+        return INF;
+    }
+    worldPos = t * dir + pos;
+    if (worldPos.y <= CYLINDR_HEIGHT) {
+        normal = normalize(vec3(worldPos.x, 0, worldPos.z));
+        return t;
+    }
+    return INF;
+}
+
+
+float traceQuadro(vec3 pos, vec3 dir, Quadrate quadrate, out vec3 normal) {
+    float eps = 1e-7;
+    vec3 normal_plane = normalize(cross(quadrate.A - quadrate.B, quadrate.B - quadrate.C));
+    normal = normal_plane;
+    if(abs(dot(normal_plane, dir)) < eps) {
+        return INF;
+    }
+    float t = dot(normal_plane, quadrate.B - pos) / dot(normal_plane, dir);
+    vec3 point_on_plane = pos + dir * t;
+    vec3 v1 = cross(quadrate.B - quadrate.A, point_on_plane - quadrate.A),
+         v2 = cross(quadrate.C - quadrate.B, point_on_plane - quadrate.B),
+         v3 = cross(quadrate.D - quadrate.C, point_on_plane - quadrate.C),
+         v4 = cross(quadrate.A - quadrate.D, point_on_plane - quadrate.D);
+    if (dot(v1, v2) > eps && dot(v1, v3) > eps && dot(v1, v4) > eps) {
+        return t;
+    }
+    return INF;
+}
+
+
+float traceCube(vec3 pos, vec3 dir, out vec3 normal) {
+    float t = INF;
+    for (int i = 0; i < cube_edges.length(); ++i) {
+        vec3 normal_plane;
+        float t_tmp = traceQuadro(pos, dir, cube_edges[i], normal_plane);
+        if (t_tmp > 0.0 && t_tmp < t) {
+            t = t_tmp;
+            normal = normal_plane;
+        }
+    }
+    return t;
+}
+
+
+// =================================================================================
+
+
+vec3 computeLight(vec3 pos, vec3 color, vec3 normal) {
+    vec3 intensity = texture(iChannel1, normal).rgb * 0.5;
+    for (int i = 0; i < LightsNum; ++i) {
+        vec3 toLight = lights[i].position - pos;
+        float att = lights[i].specular / dot(toLight, toLight);
+        intensity += max(0.0, dot(normal, normalize(toLight))) * att * 
+                    (texture(iChannel1, normal).rgb * 0.5 + lights[i].color * 0.5);
+    }
+    
+    return color * intensity;
+}
+
+
+vec3 refraction(vec3 v, vec3 normal, float n1, float n2) {
+    if (dot(v, normal) < 0.0) {
+        normal = -normal;
+    }
+    float cosA = dot(v, normal);
+    float sinA = sqrt(1.0 - cosA * cosA);
+    vec3 tang = normalize(v - cosA * normal);
+    float sinB = sinA / n2 * n1;
+    if (sinB > 1.0) return reflect(v, normal);
+    float cosB = sqrt(1.0 - sinB * sinB);
+    return sinB * tang + cosB * normal;
+}
+
+
+// ============================ Helpers ============================================
+
+
+float pow2(float x) {
+    return x * x;
+}
+
+float rand(float frame)
+{
+    return fract(sin( dot(vec3(frame), vec3(12.9898,78.233,45.5432) )) * 43758.5453);
+}
+
+
+
+// ============================== Main =============================================
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    vec3 randVals = vec3(rand(float(iFrame)), rand(float(iFrame + 5)), rand(float(iFrame + 15)));
+    randDir = normalize(randVals - 0.5);
+    vec2 uv = (fragCoord - iResolution.xy * 0.5 + (randVals.xy - 0.5) * 2.0) / iResolution.x;
+    vec3 front = normalize(-CAMERA_POS);
+    vec3 up = vec3(0, 1, 0);
+    vec3 right = normalize(cross(front, up));
+    up = normalize(cross(right, front));
+    vec3 viewVec = normalize(front + right * uv.x + up * uv.y);
+            
+    vec3 curPos = CAMERA_POS;
+    vec3 curDir = viewVec;
+    
+    float n1 = AIR_N;
+    float n2 = DIAMOND_N;
+    float GLASS_R = pow2(n1 - n2) / pow2(n1 + n2);
+    
+    CreateCube();
+    
+    fragColor.rgb = vec3(0);
+    
+    for (int i = 0; i < REFLECTION_MAX_DEPTH; ++i) {
+        float t = INF;
+        int materialType;
+        vec3 color;
+        vec3 normal;
+        vec3 tmp_normal;
+        
+        // Process Plane
+        float planeT = tracePlane(curPos, curDir, tmp_normal);
+        if (planeT < t) {
+            t = planeT;
+            materialType = DIFFUSE;
+            vec3 worldPos = t * curDir + curPos;
+            color = texture(iChannel0, worldPos.xz * 0.1).rgb;
+            normal = tmp_normal;
+            
+        }
+        
+        // Process Lights
+        for (int i = 0; i < LightsNum; ++i) {
+            lights[i].position = lights[i].init_position + vec3(1, 1, 1) * randVals * 0.05;
+            float light1T = traceSphere(curPos - lights[i].position, curDir, lights[i].radius, tmp_normal);
+            if (light1T < t) {
+                t = light1T;
+                materialType = EMISSION;
+                vec3 worldPos = t * curDir + curPos;
+                color = (texture(iChannel2, worldPos.xz * worldPos.y).rgb * 0.5 + lights[i].color * 0.5);
+                normal = tmp_normal;
+            }
+        }
+        
+        // Process Cylindr
+        float cylT = traceCylinder(curPos, curDir, tmp_normal);
+        if (cylT < t) {
+            t = cylT;
+            materialType = DIFFUSE;
+            vec3 worldPos = t * curDir + curPos;
+            color = (texture(iChannel2, worldPos.xz * worldPos.y).rgb * 0.5 + vec3(0.5, 0.5, 0.5) * 0.5);
+            normal = tmp_normal;
+        }
+        
+        // Process Cube
+        float cubeT = traceCube(curPos, curDir, tmp_normal);
+        if (cubeT < t) {
+            t = cubeT;
+            normal = tmp_normal;
+            if (randVals.x < GLASS_R) {
+                materialType = REFLECTION;
+            } else {
+                materialType = REFRACTION;
+            }
+            color = CUBE_COLOR;
+        }
+        
+        if (t != INF) {
+            vec3 worldPos = t * curDir + curPos;
+            fragColor = texture(iChannel0, worldPos.xz);
+            if (materialType == EMISSION) {
+                fragColor.rgb = color;
+                break;
+            } else if (materialType == DIFFUSE) {
+                fragColor.rgb = computeLight(worldPos, color, normal);
+                break;
+            } else if (materialType == REFLECTION) {
+                curDir = reflect(curDir, normal);
+                curPos = worldPos + curDir * 1e-5;
+            } else if (materialType == REFRACTION) {
+                curDir = refraction(curDir, normal, n1, n2);
+                curPos = worldPos + curDir * 1e-5;
+                float tmp = n1;
+                n1 = n2;
+                n2 = tmp;
+            }
+        } else {
+            fragColor.rgb = texture(iChannel1, curDir).rgb;
+        }
+    }
+}
