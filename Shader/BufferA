@@ -1,5 +1,5 @@
 const float INF = 1e10;
-const vec3 CAMERA_POS = vec3(-2, 1.2, -6); //(-3, 2, -3);
+const vec3 CAMERA_POS = vec3(-1, 1.1, -4); //(-3, 2, -3);
 const int REFLECTION_MAX_DEPTH = 10;
 
 const float PLANE_HEIGHT = -1.;
@@ -30,8 +30,8 @@ struct SphereLight {
 
 const int LightsNum = 2;
 SphereLight lights[LightsNum] = SphereLight[LightsNum]
-                                (SphereLight(vec3(-1, 1.1, 1), vec3(-1.5, 1.5, 2), 0.3, vec3(1, 0, 1), 7.0),
-                                 SphereLight(vec3(2, 1., 1), vec3(3, 1.5, 2), 0.25, vec3(0, 1, 0), 7.0)
+                                (SphereLight(vec3(-1, 2.1, 1), vec3(-1.5, 1.5, 2), 0.3, vec3(1, 0, 1), 17.0),
+                                 SphereLight(vec3(2, 2., 1), vec3(3, 1.5, 2), 0.25, vec3(0, 1, 0), 17.0)
                                  );
 struct Quadrate {
     vec3 A;
@@ -41,9 +41,14 @@ struct Quadrate {
     vec3 normal;
 };
 
-Quadrate[6] cube_edges;
+struct Cube {
+    Quadrate[6] cube_edges;
+    vec3 color;
+};
 
-Quadrate[6] CreateCube(vec3 centre, float radius) {
+Cube cube_edges;
+
+Cube CreateCube(vec3 centre, float radius) {
     Quadrate cube_edges[6];
     vec3 points[8];
 
@@ -83,8 +88,32 @@ Quadrate[6] CreateCube(vec3 centre, float radius) {
     cube_edges[5].A = points[2]; cube_edges[5].B = points[0];
     cube_edges[5].C = points[4]; cube_edges[5].D = points[6];
     cube_edges[5].normal = vec3(0, 0, 1);
-    return cube_edges;
+    return Cube(cube_edges, vec3(1, 0, 0));
 }
+
+
+// ============================ Helpers ============================================
+
+
+float pow2(float x) {
+    return x * x;
+}
+
+float rand(float frame)
+{
+    return fract(sin( dot(vec3(frame), vec3(12.9898,78.233,45.5432) )) * 43758.5453);
+}
+
+vec3 getBlockColor(int type, vec2 coords) {
+    if (type == 0){
+        return texture(iChannel3, (coords / 16.0) * 0.5).rgb;
+    } else {
+        return texture(iChannel3, (coords + vec2(16.0, 16.0)) / 16.0 * 0.5).rgb;
+    }   
+}
+
+
+
 
 
 // ============================ Trace Figures ======================================
@@ -172,11 +201,12 @@ float traceCylinder(vec3 pos, vec3 dir, out vec3 normal) {
 }
 
 
-float traceQuadro(vec3 pos, vec3 dir, Quadrate quadrate, out vec3 normal) {
+float traceQuadro(vec3 pos, vec3 dir, Quadrate quadrate, out vec3 normal, int type, out vec3 color) {
     float eps = 1e-7;
     vec3 normal_plane = normalize(cross(quadrate.A - quadrate.B, quadrate.B - quadrate.C));
     normal = normal_plane;
     if(abs(dot(normal_plane, dir)) < eps) {
+        color = vec3(0.);
         return INF;
     }
     float t = dot(normal_plane, quadrate.B - pos) / dot(normal_plane, dir);
@@ -186,19 +216,27 @@ float traceQuadro(vec3 pos, vec3 dir, Quadrate quadrate, out vec3 normal) {
          v3 = cross(quadrate.D - quadrate.C, point_on_plane - quadrate.C),
          v4 = cross(quadrate.A - quadrate.D, point_on_plane - quadrate.D);
     if (dot(v1, v2) > eps && dot(v1, v3) > eps && dot(v1, v4) > eps) {
+        float cos_ = dot(normalize(point_on_plane - quadrate.A), 
+                        normalize(quadrate.B - quadrate.A)), sin_ = sqrt(1. - cos_ * cos_);
+        int x = int(trunc(length(point_on_plane - quadrate.A) * cos_ / length(quadrate.B - quadrate.A) * 16.)),
+            y = int(trunc(length(point_on_plane - quadrate.A) * sin_ / length(quadrate.B - quadrate.A) * 16.));
+        color = getBlockColor(type, vec2(x, y));
         return t;
     }
+    color = vec3(0.);
     return INF;
 }
 
 
-float traceCube(vec3 pos, vec3 dir, Quadrate[6] cube_edges, out vec3 normal) {
+float traceCube(vec3 pos, vec3 dir, Cube cube, out vec3 normal, out vec3 color) {
     float t = INF;
-    for (int i = 0; i < cube_edges.length(); ++i) {
+    for (int i = 0; i < cube.cube_edges.length(); ++i) {
         vec3 normal_plane;
-        float t_tmp = traceQuadro(pos, dir, cube_edges[i], normal_plane);
+        vec3 tmp_color;
+        float t_tmp = traceQuadro(pos, dir, cube.cube_edges[i], normal_plane, int(cube.color.x), tmp_color);
         if (t_tmp > 0.0 && t_tmp < t) {
             t = t_tmp;
+            color = tmp_color;
             normal = normal_plane;
         }
     }
@@ -206,7 +244,7 @@ float traceCube(vec3 pos, vec3 dir, Quadrate[6] cube_edges, out vec3 normal) {
 }
 
 
-// =================================================================================
+// =============================== Effects ========================================
 
 
 vec3 isOccluded(vec3 pos, vec3 target) {
@@ -216,7 +254,8 @@ vec3 isOccluded(vec3 pos, vec3 target) {
     vec3 res = vec3(1, 1, 1);
     
     vec3 cubeNorm;
-    float cubeT = traceCube(pos, dir, cube_edges, cubeNorm);
+    vec3 tmp_color;
+    float cubeT = traceCube(pos, dir, cube_edges, cubeNorm, tmp_color);
     if (cubeT < dist) {
         res *= CUBE_COLOR * 2.;
     }
@@ -258,19 +297,74 @@ vec3 refraction(vec3 v, vec3 normal, float n1, float n2) {
 }
 
 
-// ============================ Helpers ============================================
 
 
-float pow2(float x) {
-    return x * x;
+// ============================== Voxel Figures ====================================
+
+const int NUM_CUBES_IN_SWORD = 11;
+
+Cube[NUM_CUBES_IN_SWORD] CreateSword(vec3 randVals) {
+    float SWORD_HEIGHT = CUBE_HEIGHT + 0.2 + randVals.y * 0.025;
+    Cube sword[NUM_CUBES_IN_SWORD];
+    float radius = 0.07, diametr = 2. * radius;
+    sword[0] = CreateCube(vec3(0, SWORD_HEIGHT, 0), radius);
+    sword[0].color = vec3(0);
+    
+    sword[1] = CreateCube(vec3(-diametr, SWORD_HEIGHT - diametr, 0), radius);
+    sword[1].color = vec3(0);
+    sword[2] = CreateCube(vec3(+diametr, SWORD_HEIGHT - diametr, 0), radius);
+    sword[2].color = vec3(0);
+    sword[3] = CreateCube(vec3(0, SWORD_HEIGHT - diametr, diametr), radius);
+    sword[3].color = vec3(0);
+    sword[4] = CreateCube(vec3(0, SWORD_HEIGHT - diametr, -diametr), radius);
+    sword[4].color = vec3(0);
+    
+    sword[5] = CreateCube(vec3(0, SWORD_HEIGHT - 2. *diametr, 0), radius);
+    sword[5].color = vec3(1, 0, 0);
+    
+    sword[6] = CreateCube(vec3(-diametr, SWORD_HEIGHT - 3. *diametr, 0), radius);
+    sword[6].color = vec3(0);
+    sword[7] = CreateCube(vec3(+diametr, SWORD_HEIGHT - 3. * diametr, 0), radius);
+    sword[7].color = vec3(0);
+    sword[8] = CreateCube(vec3(0, SWORD_HEIGHT - 3. *diametr, diametr), radius);
+    sword[8].color = vec3(0);
+    sword[9] = CreateCube(vec3(0, SWORD_HEIGHT - 3. * diametr, -diametr), radius);
+    sword[9].color = vec3(0);
+    
+    sword[10] = CreateCube(vec3(0, SWORD_HEIGHT - 4. *diametr, 0), radius);
+    sword[10].color = vec3(0);
+    
+    return sword;
 }
 
-float rand(float frame)
-{
-    return fract(sin( dot(vec3(frame), vec3(12.9898,78.233,45.5432) )) * 43758.5453);
+struct StateScene{
+    int materialType;
+    vec3 colorMult;
+    float t;
+    float nEnter;
+    vec3 normal;
+    vec3 curPos;
+    vec3 curDir;
+    vec3 color;
+};
+
+StateScene TraceSword(Cube sword[NUM_CUBES_IN_SWORD], StateScene state) {
+    vec3 tmp_normal;
+    
+    for (int i = 0; i < NUM_CUBES_IN_SWORD; ++i) {
+        vec3 tmp_color;
+        float cubeT = traceCube(state.curPos, state.curDir, sword[i], tmp_normal, tmp_color);
+            if (cubeT < state.t) {
+                state.t = cubeT;
+                state.normal = tmp_normal;
+                state.materialType = EMISSION;
+                state.colorMult = vec3(0, 0, 1);
+                vec3 worldPos = state.t * state.curDir + state.curPos;
+                state.color = tmp_color;
+            }
+    }
+    return state;
 }
-
-
 
 
 // ============================== Main =============================================
@@ -291,11 +385,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     float n1 = AIR_N;
     float n2 = DIAMOND_N;
-    float GLASS_R = pow2(n1 - n2) / pow2(n1 + n2);
+    float GLASS_R = pow2(GLASS_N - AIR_N) / pow2(GLASS_N + AIR_N);
     float DIAMOND_R = pow2(DIAMOND_N - GLASS_N) / pow2(DIAMOND_N + GLASS_N);
     
     cube_edges = CreateCube(vec3(0, CUBE_HEIGHT, 0), 0.5);
-    Quadrate[6] cube_edges_inside = CreateCube(vec3(0, CUBE_HEIGHT , 0), 0.2);
+    //Cube cube_inside = CreateCube(vec3(0, CUBE_HEIGHT , 0), 0.2);
+    Cube sword[NUM_CUBES_IN_SWORD] = CreateSword(randVals);
     
     fragColor.rgb = vec3(0);
     
@@ -345,7 +440,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         }
         
         // Process Cube
-        float cubeT = traceCube(curPos, curDir, cube_edges, tmp_normal);
+        vec3 tmp_color;
+        float cubeT = traceCube(curPos, curDir, cube_edges, tmp_normal, tmp_color);
         if (cubeT < t) {
             t = cubeT;
             normal = tmp_normal;
@@ -362,30 +458,24 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             }
             
         }
-        
-        cubeT = traceCube(curPos, curDir, cube_edges_inside, tmp_normal);
-        if (cubeT < t) {
-            t = cubeT;
-            normal = tmp_normal;
-            if (randVals.x < DIAMOND_R) {
-                materialType = REFLECTION;
-            } else {
-                colorMult = vec3(1, 0.2, 1);
-                materialType = REFRACTION;
-                if (dot(curDir, normal) > 0.0) {
-                    nEnter = GLASS_N;
-                } else {
-                    nEnter = DIAMOND_N;
-                }
-            }
-            
+        if (randVals.x < 0.8) {
+            StateScene state = StateScene(materialType, colorMult, t, nEnter, normal, curPos, curDir, color);
+            state = TraceSword(sword, state);
+            normal = state.normal;
+            materialType = state.materialType;
+            colorMult = state.colorMult;
+            nEnter = state.nEnter;
+            color = state.color;
+            t = state.t;
         }
+        
+        
         
         if (t != INF) {
             vec3 worldPos = t * curDir + curPos;
             fragColor = texture(iChannel0, worldPos.xz);
             if (materialType == EMISSION) {
-                fragColor.rgb = color * colorMult;
+                fragColor.rgb = color;
                 break;
             } else if (materialType == DIFFUSE) {
                 fragColor.rgb = computeLight(worldPos, color, normal) * colorMult;
