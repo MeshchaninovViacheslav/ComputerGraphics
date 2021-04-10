@@ -5,7 +5,7 @@ const int REFLECTION_MAX_DEPTH = 10;
 const float PLANE_HEIGHT = -1.;
 const float CYLINDR_HEIGHT = PLANE_HEIGHT + 0.2;
 const float CUBE_HEIGHT = CYLINDR_HEIGHT + 0.5;
-const vec3 CUBE_COLOR = vec3(0., 0.0, 0.9);
+const vec3 CUBE_COLOR = vec3(0.9, 0.9, 0.0);
 
 const float AIR_N = 1.0;
 const float GLASS_N = 1.5;
@@ -30,8 +30,8 @@ struct SphereLight {
 
 const int LightsNum = 2;
 SphereLight lights[LightsNum] = SphereLight[LightsNum]
-                                (SphereLight(vec3(-1.5, 1.1, 2), vec3(-1.5, 1.5, 2), 0.3, vec3(1, 1, 0.1), 15.0),
-                                 SphereLight(vec3(2, 1., 2), vec3(3, 1.5, 2), 0.25, vec3(0.1, 1, 0.1), 20.0)
+                                (SphereLight(vec3(-1, 1.1, 1), vec3(-1.5, 1.5, 2), 0.3, vec3(1, 0, 1), 7.0),
+                                 SphereLight(vec3(2, 1., 1), vec3(3, 1.5, 2), 0.25, vec3(0, 1, 0), 7.0)
                                  );
 struct Quadrate {
     vec3 A;
@@ -41,22 +41,23 @@ struct Quadrate {
     vec3 normal;
 };
 
-Quadrate cube_edges[6];
+Quadrate[6] cube_edges;
 
-void CreateCube(void) {
+Quadrate[6] CreateCube(vec3 centre, float radius) {
+    Quadrate cube_edges[6];
     vec3 points[8];
 
-    points[0] = vec3( -1.0, -1.0, -1.0 ) / 2.;
-    points[1] = vec3( -1.0, -1.0,  1.0 ) / 2.;
-    points[2] = vec3( -1.0,  1.0, -1.0 ) / 2.;
-    points[3] = vec3( -1.0,  1.0,  1.0 ) / 2.;
-    points[4] = vec3(  1.0, -1.0, -1.0 ) / 2.;
-    points[5] = vec3(  1.0, -1.0,  1.0 ) / 2.;
-    points[6] = vec3(  1.0,  1.0, -1.0 ) / 2.;
-    points[7] = vec3(  1.0,  1.0,  1.0 ) / 2.;
+    points[0] = vec3( -1.0, -1.0, -1.0 ) * radius;
+    points[1] = vec3( -1.0, -1.0,  1.0 ) * radius;
+    points[2] = vec3( -1.0,  1.0, -1.0 ) * radius;
+    points[3] = vec3( -1.0,  1.0,  1.0 ) * radius;
+    points[4] = vec3(  1.0, -1.0, -1.0 ) * radius;
+    points[5] = vec3(  1.0, -1.0,  1.0 ) * radius;
+    points[6] = vec3(  1.0,  1.0, -1.0 ) * radius;
+    points[7] = vec3(  1.0,  1.0,  1.0 ) * radius;
     
     for (int i = 0; i < points.length(); ++i) {
-        points[i].y += CUBE_HEIGHT;
+        points[i] += centre;
     }
     
     cube_edges[0].A = points[0]; cube_edges[0].B = points[1];
@@ -82,6 +83,7 @@ void CreateCube(void) {
     cube_edges[5].A = points[2]; cube_edges[5].B = points[0];
     cube_edges[5].C = points[4]; cube_edges[5].D = points[6];
     cube_edges[5].normal = vec3(0, 0, 1);
+    return cube_edges;
 }
 
 
@@ -190,7 +192,7 @@ float traceQuadro(vec3 pos, vec3 dir, Quadrate quadrate, out vec3 normal) {
 }
 
 
-float traceCube(vec3 pos, vec3 dir, out vec3 normal) {
+float traceCube(vec3 pos, vec3 dir, Quadrate[6] cube_edges, out vec3 normal) {
     float t = INF;
     for (int i = 0; i < cube_edges.length(); ++i) {
         vec3 normal_plane;
@@ -207,13 +209,35 @@ float traceCube(vec3 pos, vec3 dir, out vec3 normal) {
 // =================================================================================
 
 
+vec3 isOccluded(vec3 pos, vec3 target) {
+    vec3 dir = target - pos;
+    float dist = length(dir);
+    dir /= dist;
+    vec3 res = vec3(1, 1, 1);
+    
+    vec3 cubeNorm;
+    float cubeT = traceCube(pos, dir, cube_edges, cubeNorm);
+    if (cubeT < dist) {
+        res *= CUBE_COLOR * 2.;
+    }
+    
+    vec3 cylNorm;
+    float cylT = traceCylinder(pos, dir, cylNorm);
+    if (cylT < dist) {
+        res *= vec3(0.0, 0.0, 0.0);
+    }
+    
+    return res;
+}
+
+
 vec3 computeLight(vec3 pos, vec3 color, vec3 normal) {
     vec3 intensity = texture(iChannel1, normal).rgb * 0.5;
     for (int i = 0; i < LightsNum; ++i) {
         vec3 toLight = lights[i].position - pos;
-        float att = lights[i].specular / dot(toLight, toLight);
+        vec3 att = lights[i].specular / dot(toLight, toLight) * isOccluded(pos, lights[i].position + randDir * lights[i].radius);
         intensity += max(0.0, dot(normal, normalize(toLight))) * att * 
-                    (texture(iChannel1, normal).rgb * 0.5 + lights[i].color * 0.5);
+                    lights[i].color;
     }
     
     return color * intensity;
@@ -248,6 +272,7 @@ float rand(float frame)
 
 
 
+
 // ============================== Main =============================================
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -267,10 +292,15 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     float n1 = AIR_N;
     float n2 = DIAMOND_N;
     float GLASS_R = pow2(n1 - n2) / pow2(n1 + n2);
+    float DIAMOND_R = pow2(DIAMOND_N - GLASS_N) / pow2(DIAMOND_N + GLASS_N);
     
-    CreateCube();
+    cube_edges = CreateCube(vec3(0, CUBE_HEIGHT, 0), 0.5);
+    Quadrate[6] cube_edges_inside = CreateCube(vec3(0, CUBE_HEIGHT , 0), 0.2);
     
     fragColor.rgb = vec3(0);
+    
+    vec3 colorMult = vec3(1, 1, 1);
+    float nEnter = AIR_N;
     
     for (int i = 0; i < REFLECTION_MAX_DEPTH; ++i) {
         float t = INF;
@@ -278,6 +308,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         vec3 color;
         vec3 normal;
         vec3 tmp_normal;
+        
         
         // Process Plane
         float planeT = tracePlane(curPos, curDir, tmp_normal);
@@ -298,7 +329,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                 t = light1T;
                 materialType = EMISSION;
                 vec3 worldPos = t * curDir + curPos;
-                color = (texture(iChannel2, worldPos.xz * worldPos.y).rgb * 0.5 + lights[i].color * 0.5);
+                color = lights[i].color;
                 normal = tmp_normal;
             }
         }
@@ -314,39 +345,62 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         }
         
         // Process Cube
-        float cubeT = traceCube(curPos, curDir, tmp_normal);
+        float cubeT = traceCube(curPos, curDir, cube_edges, tmp_normal);
         if (cubeT < t) {
             t = cubeT;
             normal = tmp_normal;
             if (randVals.x < GLASS_R) {
                 materialType = REFLECTION;
             } else {
+                colorMult *= CUBE_COLOR;
                 materialType = REFRACTION;
+                if (dot(curDir, normal) > 0.0) {
+                    nEnter = AIR_N;
+                } else {
+                    nEnter = GLASS_N;
+                }
             }
-            color = CUBE_COLOR;
+            
+        }
+        
+        cubeT = traceCube(curPos, curDir, cube_edges_inside, tmp_normal);
+        if (cubeT < t) {
+            t = cubeT;
+            normal = tmp_normal;
+            if (randVals.x < DIAMOND_R) {
+                materialType = REFLECTION;
+            } else {
+                colorMult = vec3(1, 0.2, 1);
+                materialType = REFRACTION;
+                if (dot(curDir, normal) > 0.0) {
+                    nEnter = GLASS_N;
+                } else {
+                    nEnter = DIAMOND_N;
+                }
+            }
+            
         }
         
         if (t != INF) {
             vec3 worldPos = t * curDir + curPos;
             fragColor = texture(iChannel0, worldPos.xz);
             if (materialType == EMISSION) {
-                fragColor.rgb = color;
+                fragColor.rgb = color * colorMult;
                 break;
             } else if (materialType == DIFFUSE) {
-                fragColor.rgb = computeLight(worldPos, color, normal);
+                fragColor.rgb = computeLight(worldPos, color, normal) * colorMult;
                 break;
             } else if (materialType == REFLECTION) {
                 curDir = reflect(curDir, normal);
                 curPos = worldPos + curDir * 1e-5;
             } else if (materialType == REFRACTION) {
-                curDir = refraction(curDir, normal, n1, n2);
+                curDir = refraction(curDir, normal, n1, nEnter);
                 curPos = worldPos + curDir * 1e-5;
-                float tmp = n1;
-                n1 = n2;
-                n2 = tmp;
+                n1 = nEnter;
+                
             }
         } else {
-            fragColor.rgb = texture(iChannel1, curDir).rgb;
+            fragColor.rgb = texture(iChannel1, curDir).rgb * colorMult;
         }
     }
 }
