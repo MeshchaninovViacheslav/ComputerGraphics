@@ -1,0 +1,3 @@
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/CMakeFiles/rebuild_cache.dir
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/CMakeFiles/edit_cache.dir
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/CMakeFiles/main.dir

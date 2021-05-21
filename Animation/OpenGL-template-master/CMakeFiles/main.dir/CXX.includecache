@@ -1,0 +1,66 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.cpp
+renderer.h
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.h
+string
+-
+iostream
+-
+fstream
+-
+sstream
+-
+stb_image.h
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/stb_image.h
+chrono
+-
+
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.h
+glm/glm.hpp
+-
+GL/glew.h
+-
+SDL2/SDL.h
+-
+chrono
+-
+
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/stb_image.h
+stb_image.h
+/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/stb_image.h
+stdio.h
+-
+stdlib.h
+-
+stdarg.h
+-
+stddef.h
+-
+stdlib.h
+-
+string.h
+-
+limits.h
+-
+math.h
+-
+stdio.h
+-
+assert.h
+-
+stdint.h
+-
+emmintrin.h
+-
+intrin.h
+-
+arm_neon.h
+-
+

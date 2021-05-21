@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="main"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\usr\;CMake Files\..\..\..\..\..\..\usr\lib\;CMake Files\..\..\..\..\..\..\usr\lib\x86_64-linux-gnu\;CMake Files\..\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\;CMake Files\..\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\SDL2\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="main">
+				<Option output="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/SDL2"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 main"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="main/fast">
+				<Option output="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/SDL2"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 main/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/vyacheslav/3\ курс/ComputerGraphics/Animation/OpenGL-template-master/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/main.cpp">
+			<Option target="main"/>
+		</Unit>
+		<Unit filename="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.cpp">
+			<Option target="main"/>
+		</Unit>
+		<Unit filename="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.h">
+			<Option target="main"/>
+		</Unit>
+		<Unit filename="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/../../../../../../usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\..\usr\lib\x86_64-linux-gnu\cmake\SDL2\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
