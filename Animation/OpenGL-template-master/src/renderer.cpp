@@ -74,8 +74,8 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
     width = w;
     height = h;
 
-    GLfloat vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH];
-    GLuint indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1)];
+    GLfloat vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 * 5];
+    GLuint indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 6];
     // Initialize texture flag
     {
         glGenTextures(1, &texture);
@@ -103,13 +103,37 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
             float step_h = 1. / (NUMBERS_POINT_HEIGHT_MESH - 1);
             for (int j = 0; j < NUMBERS_POINT_WIDTH_MESH; ++j) {
                 float step_w = 1. / (NUMBERS_POINT_WIDTH_MESH - 1);
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 1] = -0.5 + step_h * i;
                 vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 0] = -0.5 + step_w * j;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 1] = -0.5 + step_h * i;
                 vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 2] = 0.;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 3] = 0. + step_w * j * 0.5;
                 vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 4] = 0. + step_h * i;
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 3] = 0. + step_w * j;
             }
         }
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0] = -0.52;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1] = -1;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2] = 0.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3] = 0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4] = 0;
+
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 5] = -0.52;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 5] = 0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 5] = 0.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 5] = 0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 5] = 1.;
+
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 10] = -0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 10] = -1;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 10] = 0.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 10] = 1.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 10] = 0;
+
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 15] = -0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 15] = 0.5;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 15] = 0.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 15] = 1.;
+        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 15] = 1;
+
         /*
         for (int i = 0; i < 5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH; i += 5) {
             for (int j = 0; j < 5; ++j) {
@@ -130,7 +154,6 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
 
         for (int i = 0; i < NUMBERS_POINT_HEIGHT_MESH - 1; ++i) {
             for (int j = 0; j < NUMBERS_POINT_WIDTH_MESH - 1; ++j) {
-
                 indices[(i * (NUMBERS_POINT_WIDTH_MESH - 1) + j) * 6 + 0] = i * NUMBERS_POINT_WIDTH_MESH + j;
                 indices[(i * (NUMBERS_POINT_WIDTH_MESH - 1) + j) * 6 + 1] = i * NUMBERS_POINT_WIDTH_MESH + j + 1;
                 indices[(i * (NUMBERS_POINT_WIDTH_MESH - 1) + j) * 6 + 2] = (i + 1) * NUMBERS_POINT_WIDTH_MESH + j;
@@ -139,6 +162,16 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
                 indices[(i * (NUMBERS_POINT_WIDTH_MESH - 1) + j) * 6 + 5] = (i + 1) * NUMBERS_POINT_WIDTH_MESH + j + 1;
             }
         }
+
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 0] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 1] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 2] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2;
+
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 3] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 4] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 5] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3;
+
+
         /*
         for (auto x: indices) {
             std::cout << x << std::endl;
@@ -150,57 +183,6 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
                 1, 2, 3    // Второй треугольник
         };
         */
-    }
-
-    int numbers_point_width_mesh = 2;
-    GLfloat vertices_flagpole[5 * NUMBERS_POINT_HEIGHT_MESH * numbers_point_width_mesh];
-    GLuint indices_flagpole[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (numbers_point_width_mesh - 1)];
-    // Initialize texture flagpole
-    {
-        glGenTextures(2, &texture_pole);
-        glBindTexture(GL_TEXTURE_2D, texture_pole);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        start_time = Clock::now();
-
-        int texture_width, texture_height;
-        unsigned char *data_texture = stbi_load("wooden_container.jpg", &texture_width, &texture_height,
-                                                nullptr, 0);
-        if (data_texture) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE,
-                         data_texture);
-            glGenerateMipmap(GL_TEXTURE_2D);
-            stbi_image_free(data_texture);
-        } else {
-            throw std::runtime_error("Failed to load texture_pole");
-        }
-
-
-        for (int i = 0; i < NUMBERS_POINT_HEIGHT_MESH; ++i) {
-            float step_h = 1. / (NUMBERS_POINT_HEIGHT_MESH - 1);
-            for (int j = 0; j < numbers_point_width_mesh; ++j) {
-                float step_w = 1. / (numbers_point_width_mesh - 1);
-                vertices_flagpole[(i * numbers_point_width_mesh + j) * 5 + 1] = -0.5 + step_h * i;
-                vertices_flagpole[(i * numbers_point_width_mesh + j) * 5 + 0] = -0.5 + step_w * j;
-                vertices_flagpole[(i * numbers_point_width_mesh + j) * 5 + 2] = 0.;
-                vertices_flagpole[(i * numbers_point_width_mesh + j) * 5 + 4] = 0. + step_h * i;
-                vertices_flagpole[(i * numbers_point_width_mesh + j) * 5 + 3] = 0. + step_w * j;
-            }
-        }
-
-        for (int i = 0; i < NUMBERS_POINT_HEIGHT_MESH - 1; ++i) {
-            for (int j = 0; j < numbers_point_width_mesh - 1; ++j) {
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 0] = i * numbers_point_width_mesh + j;
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 1] = i * numbers_point_width_mesh + j + 1;
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 2] = (i + 1) * numbers_point_width_mesh + j;
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 3] = i * numbers_point_width_mesh + j + 1;
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 4] = (i + 1) * numbers_point_width_mesh + j;
-                indices_flagpole[(i * (numbers_point_width_mesh - 1) + j) * 6 + 5] = (i + 1) * numbers_point_width_mesh + j + 1;
-            }
-        }
-
     }
 
     // 1. Создаем буферы
@@ -223,11 +205,6 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindTexture(GL_TEXTURE_2D, texture);
-
-    // 6. Fill texture flag_pole
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-    glBindTexture(GL_TEXTURE_2D, texture_pole);
 
     // 7. Отвязываем VAO (НЕ EBO)
     glBindVertexArray(0);
