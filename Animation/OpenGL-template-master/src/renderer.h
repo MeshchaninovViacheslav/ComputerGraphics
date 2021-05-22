@@ -1,9 +1,11 @@
 #pragma once
+#include <chrono>
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
-#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define NUMBERS_POINT_HEIGHT_MESH 100
 #define NUMBERS_POINT_WIDTH_MESH 100
@@ -24,7 +26,8 @@ private:
     GLuint shaderProgram;
     SDL_Window *window;
     unsigned int texture;
-    unsigned int texture_pole;
+    GLfloat translations[300];
     TimePoint start_time;
     int width, height;
+    glm::mat4 model, view, projection;
 };

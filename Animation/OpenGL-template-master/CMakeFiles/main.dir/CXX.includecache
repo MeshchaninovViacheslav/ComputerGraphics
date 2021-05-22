@@ -23,13 +23,17 @@ chrono
 -
 
 /home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/renderer.h
+chrono
+-
 glm/glm.hpp
 -
 GL/glew.h
 -
 SDL2/SDL.h
 -
-chrono
+glm/gtc/matrix_transform.hpp
+-
+glm/gtc/type_ptr.hpp
 -
 
 /home/vyacheslav/3 курс/ComputerGraphics/Animation/OpenGL-template-master/src/stb_image.h

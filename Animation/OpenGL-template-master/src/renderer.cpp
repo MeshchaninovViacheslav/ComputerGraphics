@@ -74,8 +74,9 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
     width = w;
     height = h;
 
-    GLfloat vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 * 5];
-    GLuint indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 6];
+    int num_points_in_vert = 6;
+    GLfloat vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 8 * num_points_in_vert];
+    GLuint indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 6 * 2];
     // Initialize texture flag
     {
         glGenTextures(1, &texture);
@@ -87,7 +88,7 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
         start_time = Clock::now();
 
         int texture_width, texture_height;
-        unsigned char *data_texture = stbi_load("bochkarev.jpg", &texture_width, &texture_height,
+        unsigned char *data_texture = stbi_load("gml.jpg", &texture_width, &texture_height,
                                                 nullptr, 0);
         if (data_texture) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE,
@@ -103,36 +104,71 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
             float step_h = 1. / (NUMBERS_POINT_HEIGHT_MESH - 1);
             for (int j = 0; j < NUMBERS_POINT_WIDTH_MESH; ++j) {
                 float step_w = 1. / (NUMBERS_POINT_WIDTH_MESH - 1);
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 0] = -0.5 + step_w * j;
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 1] = -0.5 + step_h * i;
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 2] = 0.;
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 3] = 0. + step_w * j * 0.5;
-                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * 5 + 4] = 0. + step_h * i;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 0] = -0.5 + step_w * j;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 2] = -0.5 + step_h * i;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 1] = 0.;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 3] = 0. + step_w * j / 3.;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 4] = 0. + step_h * i;
+                vertices[(i * NUMBERS_POINT_WIDTH_MESH + j) * num_points_in_vert + 5] = 0. + step_w * j;
             }
         }
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0] = -0.52;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1] = -1;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2] = 0.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3] = 0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4] = 0;
+        // flagpole
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0] = -0.55;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3] = 1. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4] = 0;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5] = 0;
 
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 5] = -0.52;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 5] = 0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 5] = 0.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 5] = 0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 5] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + num_points_in_vert] = -0.55;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + num_points_in_vert] = 0.5;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + num_points_in_vert] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + num_points_in_vert] = 1. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + num_points_in_vert] = 1;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + num_points_in_vert] = 0;
 
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 10] = -0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 10] = -1;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 10] = 0.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 10] = 1.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 10] = 0;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 2 * num_points_in_vert] = -0.5;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 2 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 2 * num_points_in_vert] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 2 * num_points_in_vert] = 2. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 2 * num_points_in_vert] = 0;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 2 * num_points_in_vert] = 0;
 
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 15] = -0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 15] = 0.5;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 15] = 0.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 15] = 1.;
-        vertices[5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 15] = 1;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 3 * num_points_in_vert] = -0.5;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 3 * num_points_in_vert] = 0.5;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 3 * num_points_in_vert] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 3 * num_points_in_vert] = 2. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 3 * num_points_in_vert] = 1;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 3 * num_points_in_vert] = 0;
+
+        // base
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 4 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 4 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 4 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 4 * num_points_in_vert] = 2. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 4 * num_points_in_vert] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 4 * num_points_in_vert] = 0.;
+
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 5 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 5 * num_points_in_vert]  = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 5 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 5 * num_points_in_vert] = 2. / 3.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 5 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 5 * num_points_in_vert] = 0.;
+
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 6 * num_points_in_vert] = 1;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 6 * num_points_in_vert] = -1;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 6 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 6 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 6 * num_points_in_vert] = 0.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 6 * num_points_in_vert] = 0.;
+
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 0 + 7 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 7 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 7 * num_points_in_vert] = -1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 7 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4 + 7 * num_points_in_vert] = 1.;
+        vertices[num_points_in_vert * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 5 + 7 * num_points_in_vert] = 0.;
 
         /*
         for (int i = 0; i < 5 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH; i += 5) {
@@ -163,6 +199,7 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
             }
         }
 
+        //flagpole
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 0] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH;
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 1] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1;
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 2] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2;
@@ -170,6 +207,15 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 3] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1;
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 4] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2;
         indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 5] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3;
+
+        // base
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 0 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 4;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 1 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 4;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 2 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 4;
+
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 3 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 1 + 4;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 4 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 2 + 4;
+        indices[2 * 3 * (NUMBERS_POINT_HEIGHT_MESH - 1) * (NUMBERS_POINT_WIDTH_MESH - 1) + 5 + 6] = NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 3 + 4;
 
 
         /*
@@ -183,6 +229,25 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
                 1, 2, 3    // Второй треугольник
         };
         */
+        int index = 0;
+        float offset = 0.1f;
+        for(int y = -10; y < 10; y += 2)
+        {
+            for(int x = -10; x < 10; x += 2)
+            {
+                translations[3 * index] = (float)x / 10.0f + offset;
+                translations[3 * index + 1] = 1.0;
+                translations[3 * index++ + 2] = (float)y / 10.0f + offset;
+            }
+        }
+
+        model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     }
 
     // 1. Создаем буферы
@@ -198,18 +263,26 @@ void Renderer::Init(SDL_Window *_window, int w, int h) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     // 4. Устанавливаем указатели на вершинные атрибуты
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, num_points_in_vert * sizeof(GLfloat), (GLvoid *) 0);
     glEnableVertexAttribArray(0);
 
     // 5. Fill texture flag
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, num_points_in_vert * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // 6. Fill distance from flagpole
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, num_points_in_vert * sizeof(float), (void *) (5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     // 7. Отвязываем VAO (НЕ EBO)
     glBindVertexArray(0);
 
+    glEnable(GL_DEPTH_TEST);
+
     add_shader_program(shaderProgram, "shaders/simple.vert", "shaders/simple.frag");
+
 }
 
 void Renderer::Render() {
@@ -220,8 +293,15 @@ void Renderer::Render() {
     float dif_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count() / 1000.0;
     glUniform1f(glGetUniformLocation(shaderProgram, "time"), dif_time);
 
+    glUniform3fv(glGetUniformLocation(shaderProgram, "offsets"), 100, translations);
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH, GL_UNSIGNED_INT, 0);
+    glDrawElementsInstanced(GL_TRIANGLES, 6 * NUMBERS_POINT_HEIGHT_MESH * NUMBERS_POINT_WIDTH_MESH + 12, GL_UNSIGNED_INT, 0, 100);
     glBindVertexArray(0);
 }
 
